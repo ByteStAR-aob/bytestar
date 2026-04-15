@@ -1,0 +1,24 @@
+{
+  "name": "ByteStar – HTML Vault",
+  "short_name": "ByteStar",
+  "description": "Create, store, encrypt and manage HTML projects locally",
+  "start_url": "./bytestar.html",
+  "display": "standalone",
+  "background_color": "#05060a",
+  "theme_color": "#00d4ff",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%2305060a'/><text x='96' y='130' font-size='110' text-anchor='middle' fill='%2300d4ff' font-family='monospace' font-weight='900'>⭐</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%2305060a'/><text x='256' y='350' font-size='300' text-anchor='middle' fill='%2300d4ff' font-family='monospace' font-weight='900'>⭐</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
