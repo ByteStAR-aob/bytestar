@@ -236,12 +236,80 @@ body::before{
 
 /* MONACO WRAPPER */
 #monacoWrap{
-  border-radius:10px;overflow:hidden;border:1px solid var(--border);
+  border-radius:0 0 10px 10px;overflow:hidden;border:1px solid var(--border);
+  border-top:none;
   height:340px;min-height:200px;resize:vertical;position:relative;
   transition:border-color .2s;
 }
 #monacoWrap:focus-within{border-color:rgba(0,212,255,0.3)}
 #monacoEditor{width:100%;height:100%}
+
+/* EDITOR TOOLBAR (above Monaco) */
+.editor-toolbar{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  padding:7px 10px;
+  background:rgba(255,255,255,0.025);
+  border:1px solid var(--border);
+  border-bottom:none;
+  border-radius:10px 10px 0 0;
+}
+.editor-toolbar .tbtn{
+  padding:5px 11px;border-radius:7px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-size:11px;font-weight:700;
+  font-family:var(--font-mono);cursor:pointer;transition:all .18s;
+  display:flex;align-items:center;gap:5px;letter-spacing:0.3px;
+  white-space:nowrap;
+}
+.editor-toolbar .tbtn:hover{border-color:var(--accent1);color:var(--accent1);background:rgba(0,212,255,0.05)}
+.editor-toolbar .tbtn.accent{border-color:rgba(0,212,255,0.2);color:var(--accent1)}
+.editor-toolbar .tbtn.accent:hover{background:rgba(0,212,255,0.08)}
+.editor-toolbar-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 2px}
+.editor-toolbar-right{margin-left:auto;display:flex;gap:6px;align-items:center}
+.version-label{font-size:10px;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.5px}
+
+/* VERSION HISTORY PANEL */
+.version-panel{
+  background:rgba(0,0,0,0.3);border:1px solid var(--border);
+  border-radius:10px;padding:10px;margin-top:10px;
+  display:none;
+}
+.version-panel.open{display:block}
+.version-panel-title{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;
+  color:var(--muted);text-transform:uppercase;margin-bottom:8px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.version-slot{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 10px;border-radius:8px;border:1px solid var(--border);
+  background:rgba(255,255,255,0.02);margin-bottom:6px;cursor:pointer;
+  transition:border-color .18s,background .18s;
+}
+.version-slot:last-child{margin-bottom:0}
+.version-slot:hover{border-color:var(--accent1);background:rgba(0,212,255,0.04)}
+.version-slot.current{border-color:rgba(0,212,255,0.2);background:rgba(0,212,255,0.03)}
+.vs-badge{
+  padding:3px 8px;border-radius:5px;font-size:10px;font-family:var(--font-mono);
+  font-weight:700;flex-shrink:0;
+}
+.vs-badge.v-cur{background:rgba(0,212,255,0.15);color:var(--accent1)}
+.vs-badge.v-old{background:rgba(255,255,255,0.05);color:var(--muted)}
+.vs-info{flex:1;min-width:0}
+.vs-time{font-size:11px;color:var(--text);font-family:var(--font-mono)}
+.vs-size{font-size:10px;color:var(--muted);margin-top:1px}
+.vs-restore{
+  padding:5px 10px;border-radius:6px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-size:11px;font-weight:700;
+  font-family:var(--font-mono);cursor:pointer;transition:all .18s;
+}
+.vs-restore:hover{border-color:var(--accent1);color:var(--accent1)}
+.vs-empty{font-size:12px;color:var(--muted);text-align:center;padding:12px;font-family:var(--font-mono)}
+
+@media(max-width:700px){
+  .editor-toolbar{gap:4px;padding:6px 8px}
+  .editor-toolbar .tbtn{font-size:10px;padding:4px 8px}
+  .editor-toolbar-right{margin-left:0;width:100%}
+}
 
 /* TAG INPUT */
 .tag-input-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
@@ -524,9 +592,32 @@ body.desktop-mode .preview-wrap{width:100%;aspect-ratio:4/3}
       <div class="current-tags" id="currentTags"></div>
     </div>
 
+    <!-- EDITOR TOOLBAR -->
+    <div class="editor-toolbar">
+      <button class="tbtn accent" id="selectAllBtn">⬛ Select All</button>
+      <div class="editor-toolbar-sep"></div>
+      <button class="tbtn" id="copyAllBtn">📋 Copy All</button>
+      <button class="tbtn" id="clearEditorBtn">🗑 Clear</button>
+      <div class="editor-toolbar-sep"></div>
+      <button class="tbtn" id="fmtBtn">✨ Format</button>
+      <div class="editor-toolbar-right">
+        <span class="version-label">HISTORY</span>
+        <button class="tbtn" id="toggleVersionBtn">🕐 3 Versions</button>
+      </div>
+    </div>
+
     <!-- MONACO EDITOR -->
     <div id="monacoWrap">
       <div id="monacoEditor"></div>
+    </div>
+
+    <!-- VERSION HISTORY PANEL -->
+    <div class="version-panel" id="versionPanel">
+      <div class="version-panel-title">
+        <span>⏱ VERSION HISTORY</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.2)">click to restore</span>
+      </div>
+      <div id="versionList"></div>
     </div>
 
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap" class="editor-dl-row">
@@ -646,10 +737,157 @@ require(['vs/editor/editor.main'], function(){
     scrollbar: { verticalScrollbarSize: 5, horizontalScrollbarSize: 5 }
   });
   monacoReady = true;
+
+  // Add Monaco context menu action for Select All (shows in right-click menu)
+  monacoInstance.addAction({
+    id: 'bytestar-select-all',
+    label: '⬛ Select All Code',
+    keybindings: [],
+    contextMenuGroupId: '9_cutcopypaste',
+    contextMenuOrder: 0,
+    run: function(ed){ selectAllInEditor(); }
+  });
 });
 
 function getEditorVal(){ return monacoReady ? monacoInstance.getValue() : '' }
 function setEditorVal(v){ if(monacoReady) monacoInstance.setValue(v||'') }
+
+/* ── SELECT ALL IN EDITOR ── */
+function selectAllInEditor(){
+  if(!monacoReady) return;
+  monacoInstance.focus();
+  const model = monacoInstance.getModel();
+  if(!model) return;
+  const lastLine = model.getLineCount();
+  const lastCol = model.getLineMaxColumn(lastLine);
+  monacoInstance.setSelection({
+    startLineNumber:1, startColumn:1,
+    endLineNumber:lastLine, endColumn:lastCol
+  });
+  toast('All code selected ✓','info',1600);
+}
+
+/* ── COPY ALL ── */
+async function copyAllInEditor(){
+  if(!monacoReady) return;
+  const val = monacoInstance.getValue();
+  try{
+    await navigator.clipboard.writeText(val);
+    toast('Copied to clipboard 📋','success',1800);
+  }catch(e){
+    // fallback: select all so user can manually copy
+    selectAllInEditor();
+    toast('Clipboard blocked — code selected, copy manually','warn',3000);
+  }
+}
+
+/* ── VERSION HISTORY SYSTEM ── */
+// Each project stores: versions: [{html, savedAt}]  (max 3, newest first)
+const MAX_VERSIONS = 3;
+
+function fmtDateTime(ts){
+  const d=new Date(ts);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+    + ' · '
+    + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+}
+
+function fmtBytes(str){
+  const b = new Blob([str]).size;
+  if(b<1024) return b+'B';
+  if(b<1048576) return (b/1024).toFixed(1)+'KB';
+  return (b/1048576).toFixed(2)+'MB';
+}
+
+function pushVersion(id, html){
+  const p = db[id];
+  if(!p) return;
+  if(!p.versions) p.versions = [];
+  // Don't push duplicate of the very last save
+  if(p.versions.length > 0 && p.versions[0].html === html) return;
+  p.versions.unshift({ html, savedAt: Date.now() });
+  if(p.versions.length > MAX_VERSIONS) p.versions = p.versions.slice(0, MAX_VERSIONS);
+}
+
+function renderVersionPanel(){
+  const list = document.getElementById('versionList');
+  list.innerHTML = '';
+  const id = editingId;
+  if(!id || !db[id]){
+    list.innerHTML='<div class="vs-empty">Save a project to see version history.</div>';
+    return;
+  }
+  const versions = db[id].versions || [];
+  if(!versions.length){
+    list.innerHTML='<div class="vs-empty">No versions yet — save the project to create v1.</div>';
+    return;
+  }
+  versions.forEach((v, i)=>{
+    const slot = document.createElement('div');
+    slot.className = 'version-slot' + (i===0?' current':'');
+
+    const badge = document.createElement('div');
+    badge.className = 'vs-badge ' + (i===0?'v-cur':'v-old');
+    badge.textContent = i===0 ? 'CURRENT' : 'v'+(versions.length - i);
+
+    const info = document.createElement('div');
+    info.className = 'vs-info';
+    info.innerHTML = `<div class="vs-time">${fmtDateTime(v.savedAt)}</div><div class="vs-size">${fmtBytes(v.html)}</div>`;
+
+    if(i===0){
+      // Current version — just shows info, no restore needed
+      const cur = document.createElement('div');
+      cur.style.cssText='font-size:10px;color:var(--accent1);font-family:var(--font-mono);opacity:0.7';
+      cur.textContent='active';
+      slot.append(badge, info, cur);
+    } else {
+      const restoreBtn = document.createElement('button');
+      restoreBtn.className = 'vs-restore';
+      restoreBtn.textContent = '↩ Restore';
+      restoreBtn.onclick = ()=>{
+        if(confirm('Restore this version? Your current unsaved edits will be replaced in the editor.')){
+          setEditorVal(v.html);
+          // Move restored version to front as new current
+          const newCurrent = { html: v.html, savedAt: Date.now() };
+          db[id].versions.unshift(newCurrent);
+          if(db[id].versions.length > MAX_VERSIONS) db[id].versions = db[id].versions.slice(0, MAX_VERSIONS);
+          saveDB(db);
+          renderVersionPanel();
+          toast('Version restored ↩','success');
+        }
+      };
+      slot.append(badge, info, restoreBtn);
+    }
+    list.appendChild(slot);
+  });
+}
+
+/* ── TOOLBAR BUTTON WIRING ── */
+document.getElementById('selectAllBtn').addEventListener('click', selectAllInEditor);
+document.getElementById('copyAllBtn').addEventListener('click', copyAllInEditor);
+
+document.getElementById('clearEditorBtn').addEventListener('click', ()=>{
+  if(monacoReady && monacoInstance.getValue().trim()){
+    if(confirm('Clear all code in the editor? This cannot be undone until you restore from history.')){
+      setEditorVal('');
+      toast('Editor cleared','warn',1600);
+    }
+  }
+});
+
+document.getElementById('fmtBtn').addEventListener('click', ()=>{
+  if(monacoReady){
+    monacoInstance.getAction('editor.action.formatDocument').run().then(()=>{
+      toast('Code formatted ✨','success',1600);
+    }).catch(()=>{ toast('Formatter not available for this content','info'); });
+  }
+});
+
+document.getElementById('toggleVersionBtn').addEventListener('click', ()=>{
+  const panel = document.getElementById('versionPanel');
+  const isOpen = panel.classList.toggle('open');
+  if(isOpen) renderVersionPanel();
+});
 
 /* ── RENDER ── */
 function getAllTags(){
